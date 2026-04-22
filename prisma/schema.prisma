@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model School {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolYears        SchoolYear[]
+  students           Student[]
+  teachers           Teacher[]
+  classes            Classe[]
+  payments           Payment[]
+  subjects           Subject[]
+}
+
+model SchoolYear {
+  id         String   @id @default(cuid())
+  schoolId   String
+  label      String
+  startDate  DateTime
+  endDate    DateTime
+  isActive   Boolean  @default(true)
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  school             School             @relation(fields: [schoolId], references: [id])
+  classes            Classe[]
+  enrollments        Enrollment[]
+  grades             Grade[]
+  payments           Payment[]
+  teacherAssignments TeacherAssignment[]
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  schoolId    String
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime?
+  gender      String   @default("M")
+  address     String?
+  phone       String?
+  email       String?
+  parentName  String?
+  parentPhone String?
+  photo       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school     School       @relation(fields: [schoolId], references: [id])
+  enrollments Enrollment[]
+  grades     Grade[]
+  payments   Payment[]
+}
+
+model Teacher {
+  id        String   @id @default(cuid())
+  schoolId  String
+  firstName String
+  lastName  String
+  phone     String?
+  email     String?
+  subject   String?
+  address   String?
+  photo     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school             School             @relation(fields: [schoolId], references: [id])
+  teacherAssignments TeacherAssignment[]
+}
+
+model Classe {
+  id           String   @id @default(cuid())
+  schoolId     String
+  name         String
+  level        String?
+  capacity     Int?
+  room         String?
+  schoolYearId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school             School             @relation(fields: [schoolId], references: [id])
+  schoolYear         SchoolYear         @relation(fields: [schoolYearId], references: [id])
+  enrollments        Enrollment[]
+  teacherAssignments TeacherAssignment[]
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  code        String?
+  coefficient Float    @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school             School             @relation(fields: [schoolId], references: [id])
+  teacherAssignments TeacherAssignment[]
+  grades             Grade[]
+}
+
+model Enrollment {
+  id           String   @id @default(cuid())
+  studentId    String
+  classId      String
+  schoolYearId String
+  enrolledAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  class      Classe     @relation(fields: [classId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+}
+
+model TeacherAssignment {
+  id           String   @id @default(cuid())
+  teacherId    String
+  classId      String
+  subjectId    String
+  schoolYearId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teacher    Teacher    @relation(fields: [teacherId], references: [id])
+  class      Classe     @relation(fields: [classId], references: [id])
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+}
+
+model Grade {
+  id           String   @id @default(cuid())
+  studentId    String
+  subjectId    String
+  schoolYearId String
+  classId      String?
+  trimester    Int
+  examType     String   @default("devoir")
+  score        Float
+  maxScore     Float    @default(20)
+  comment      String?
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  studentId    String
+  schoolYearId String
+  schoolId     String
+  amount       Float
+  paymentType  String   @default("inscription")
+  method       String   @default("especes")
+  reference    String?
+  description  String?
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+  school     School     @relation(fields: [schoolId], references: [id])
+}
